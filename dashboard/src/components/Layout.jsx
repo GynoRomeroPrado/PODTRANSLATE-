@@ -9,21 +9,24 @@ import {
   Settings,
   LogOut
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../stores/authStore'
 import { cn } from '../lib/utils'
-
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/podcasts', icon: Podcast, label: 'Podcasts' },
-  { to: '/episodes', icon: FileAudio, label: 'Episodes' },
-  { to: '/transcriptions', icon: Radio, label: 'Transcriptions' },
-  { to: '/distribution', icon: Share2, label: 'Distribution' },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
-]
+import LanguageSelector from './LanguageSelector'
 
 export default function Layout() {
+  const { t } = useTranslation()
   const { user, logout } = useAuthStore()
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/podcasts', icon: Podcast, label: t('nav.podcasts') },
+    { to: '/episodes', icon: FileAudio, label: t('nav.episodes') },
+    { to: '/transcriptions', icon: Radio, label: t('nav.transcriptions') },
+    { to: '/distribution', icon: Share2, label: t('nav.distribution') },
+    { to: '/analytics', icon: BarChart3, label: t('nav.analytics') },
+    { to: '/settings', icon: Settings, label: t('nav.settings') },
+  ]
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -31,7 +34,7 @@ export default function Layout() {
       <aside className="w-64 bg-white border-r border-gray-200">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-primary-600">PodTranslate</h1>
-          <p className="text-sm text-gray-500 mt-1">Admin Dashboard</p>
+          <p className="text-sm text-gray-500 mt-1">{t('dashboard.subtitle')}</p>
         </div>
 
         <nav className="px-3">
@@ -57,6 +60,11 @@ export default function Layout() {
         </nav>
 
         <div className="absolute bottom-0 w-64 p-4 border-t border-gray-200">
+          {/* Language Selector */}
+          <div className="mb-3">
+            <LanguageSelector />
+          </div>
+
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
               <span className="text-primary-700 font-semibold">
@@ -65,7 +73,7 @@ export default function Layout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.name || 'User'}
+                {user?.name || 'Usuario'}
               </p>
               <p className="text-xs text-gray-500 truncate">
                 {user?.email || 'user@example.com'}
@@ -77,7 +85,7 @@ export default function Layout() {
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <LogOut size={16} />
-            <span>Logout</span>
+            <span>{t('nav.logout')}</span>
           </button>
         </div>
       </aside>
