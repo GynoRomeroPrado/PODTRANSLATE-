@@ -1,0 +1,67 @@
+{
+  "dashboard": {
+    "title": "PodTranslate - System Overview",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Error Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Transcription Jobs",
+        "targets": [
+          {
+            "expr": "transcription_jobs_total",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "title": "Processing Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(transcription_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Active Workers",
+        "targets": [
+          {
+            "expr": "worker_active_count",
+            "legendFormat": "{{worker_type}}"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "title": "Queue Depth",
+        "targets": [
+          {
+            "expr": "queue_depth",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}
