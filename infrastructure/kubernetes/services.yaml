@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: distribution
+  namespace: podtranslate
+  labels:
+    app: distribution
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: distribution
+  template:
+    metadata:
+      labels:
+        app: distribution
+    spec:
+      containers:
+      - name: distribution
+        image: podtranslate/distribution:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3002
+        envFrom:
+        - secretRef:
+            name: podtranslate-secrets
+        - configMapRef:
+            name: podtranslate-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: distribution
+  namespace: podtranslate
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3002
+    targetPort: 3002
+  selector:
+    app: distribution
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics
+  namespace: podtranslate
+  labels:
+    app: analytics
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      containers:
+      - name: analytics
+        image: podtranslate/analytics:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3003
+        envFrom:
+        - secretRef:
+            name: podtranslate-secrets
+        - configMapRef:
+            name: podtranslate-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics
+  namespace: podtranslate
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3003
+    targetPort: 3003
+  selector:
+    app: analytics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-tools
+  namespace: podtranslate
+  labels:
+    app: ai-tools
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-tools
+  template:
+    metadata:
+      labels:
+        app: ai-tools
+    spec:
+      containers:
+      - name: ai-tools
+        image: podtranslate/ai-tools:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3004
+        envFrom:
+        - secretRef:
+            name: podtranslate-secrets
+        - configMapRef:
+            name: podtranslate-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-tools
+  namespace: podtranslate
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3004
+    targetPort: 3004
+  selector:
+    app: ai-tools
