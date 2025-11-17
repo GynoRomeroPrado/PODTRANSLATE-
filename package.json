@@ -1,0 +1,48 @@
+{
+  "name": "podtranslate",
+  "version": "1.0.0",
+  "description": "Multi-language podcast transcription and distribution platform",
+  "private": true,
+  "workspaces": [
+    "services/api-gateway",
+    "services/distribution",
+    "frontend/dashboard"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:distribution\" \"npm run dev:audio\" \"npm run dev:analytics\" \"npm run dev:ai-tools\"",
+    "dev:api": "cd services/api-gateway && npm run dev",
+    "dev:distribution": "cd services/distribution && npm run dev",
+    "dev:audio": "cd services/audio-processing && python src/main.py",
+    "dev:analytics": "cd services/analytics && python src/main.py",
+    "dev:ai-tools": "cd services/ai-tools && python src/main.py",
+    "dev:frontend": "cd frontend/dashboard && npm run dev",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "db:migrate": "cd shared/database && npm run migrate",
+    "db:seed": "cd shared/database && npm run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.1.0",
+    "eslint": "^8.54.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "podcast",
+    "transcription",
+    "translation",
+    "multi-language",
+    "whisper",
+    "ai",
+    "seo"
+  ],
+  "author": "PODTRANSLATE Team",
+  "license": "MIT"
+}

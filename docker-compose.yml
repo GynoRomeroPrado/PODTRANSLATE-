@@ -1,0 +1,214 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: podtranslate-postgres
+    environment:
+      POSTGRES_DB: podtranslate
+      POSTGRES_USER: podtranslate
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U podtranslate"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ClickHouse for Analytics
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: podtranslate-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    environment:
+      CLICKHOUSE_DB: podtranslate_analytics
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: podtranslate-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    container_name: podtranslate-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Audio Processing Service
+  audio-processing:
+    build:
+      context: ./services/audio-processing
+      dockerfile: Dockerfile
+    container_name: podtranslate-audio-processing
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://podtranslate:password@postgres:5432/podtranslate
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    volumes:
+      - ./services/audio-processing:/app
+      - audio_temp:/tmp/audio
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Distribution Service
+  distribution:
+    build:
+      context: ./services/distribution
+      dockerfile: Dockerfile
+    container_name: podtranslate-distribution
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://podtranslate:password@postgres:5432/podtranslate
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    volumes:
+      - ./services/distribution:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Analytics Service
+  analytics:
+    build:
+      context: ./services/analytics
+      dockerfile: Dockerfile
+    container_name: podtranslate-analytics
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://podtranslate:password@postgres:5432/podtranslate
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    env_file:
+      - .env
+    volumes:
+      - ./services/analytics:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # AI Tools Service
+  ai-tools:
+    build:
+      context: ./services/ai-tools
+      dockerfile: Dockerfile
+    container_name: podtranslate-ai-tools
+    ports:
+      - "3004:3004"
+    environment:
+      - DATABASE_URL=postgresql://podtranslate:password@postgres:5432/podtranslate
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    volumes:
+      - ./services/ai-tools:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: podtranslate-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://podtranslate:password@postgres:5432/podtranslate
+      - REDIS_URL=redis://redis:6379
+      - AUDIO_PROCESSING_URL=http://audio-processing:3001
+      - DISTRIBUTION_URL=http://distribution:3002
+      - ANALYTICS_URL=http://analytics:3003
+      - AI_TOOLS_URL=http://ai-tools:3004
+    env_file:
+      - .env
+    volumes:
+      - ./services/api-gateway:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Grafana for Monitoring
+  grafana:
+    image: grafana/grafana:latest
+    container_name: podtranslate-grafana
+    ports:
+      - "3005:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - clickhouse
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  rabbitmq_data:
+  redis_data:
+  grafana_data:
+  audio_temp:

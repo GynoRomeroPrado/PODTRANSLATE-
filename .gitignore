@@ -1,0 +1,94 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.nyc_output
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.cache
+
+# Audio files (local dev only)
+*.wav
+*.mp3
+*.m4a
+*.aac
+!test_fixtures/*.wav
+!test_fixtures/*.mp3
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Keys and certificates
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Generated files
+*.gen.ts
+*.gen.js
+graphql/generated/
+
+# Monitoring
+grafana/data/
+prometheus/data/
