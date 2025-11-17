@@ -1,0 +1,19 @@
+{{- if .Values.apiGateway.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "podtranslate.fullname" . }}-api-gateway
+  labels:
+    {{- include "podtranslate.labels" . | nindent 4 }}
+    {{- include "podtranslate.componentLabels" (dict "component" "api-gateway") | nindent 4 }}
+spec:
+  type: {{ .Values.apiGateway.service.type }}
+  ports:
+  - port: {{ .Values.apiGateway.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "podtranslate.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api-gateway
+{{- end }}

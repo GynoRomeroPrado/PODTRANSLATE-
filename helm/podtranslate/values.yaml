@@ -1,0 +1,298 @@
+# Default values for podtranslate
+# This is a YAML-formatted file.
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# API Gateway
+apiGateway:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: podtranslate/api-gateway
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    NODE_ENV: production
+    PORT: 3000
+
+# Audio Processing Service
+audioProcessing:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: podtranslate/audio-processing
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3001
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1000m"
+      nvidia.com/gpu: 1
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+      nvidia.com/gpu: 1
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  nodeSelector:
+    workload: gpu
+  env:
+    WHISPER_MODEL: large-v3
+    ENABLE_DIARIZATION: "true"
+    ENABLE_TTS: "true"
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 50Gi
+    mountPath: /tmp/models
+
+# Distribution Service
+distribution:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: podtranslate/distribution
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3002
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+  env:
+    NODE_ENV: production
+
+# Analytics Service
+analytics:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: podtranslate/analytics
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3003
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# AI Tools Service
+aiTools:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: podtranslate/ai-tools
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3004
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Dashboard
+dashboard:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: podtranslate/dashboard
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+  hosts:
+    - host: podtranslate.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: api-gateway
+        - path: /
+          pathType: Prefix
+          service: dashboard
+  tls:
+    - secretName: podtranslate-tls
+      hosts:
+        - podtranslate.example.com
+
+# PostgreSQL (using Bitnami chart)
+postgresql:
+  enabled: true
+  auth:
+    username: podtranslate
+    password: changeme
+    database: podtranslate
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+
+# Redis (using Bitnami chart)
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: changeme
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "200m"
+
+# RabbitMQ (using Bitnami chart)
+rabbitmq:
+  enabled: true
+  auth:
+    username: podtranslate
+    password: changeme
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# ClickHouse (external)
+clickhouse:
+  enabled: true
+  host: clickhouse
+  port: 8123
+  database: analytics
+  user: default
+  password: changeme
+
+# S3 Storage (external)
+s3:
+  enabled: true
+  endpoint: https://s3.amazonaws.com
+  bucket: podtranslate-audio
+  region: us-east-1
+  # Set credentials in secrets
+
+# External secrets
+secrets:
+  # Create these manually or use external-secrets operator
+  openai:
+    apiKey: ""
+  deepl:
+    apiKey: ""
+  spotify:
+    clientId: ""
+    clientSecret: ""
+  apple:
+    teamId: ""
+    keyId: ""
+    privateKey: ""
+  google:
+    clientId: ""
+    clientSecret: ""
+  aws:
+    accessKeyId: ""
+    secretAccessKey: ""
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
