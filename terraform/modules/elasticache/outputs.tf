@@ -1,0 +1,9 @@
+output "endpoint" {
+  description = "Redis endpoint"
+  value       = aws_elasticache_replication_group.main.primary_endpoint_address
+}
+
+output "secret_arn" {
+  description = "Secrets Manager secret ARN"
+  value       = aws_secretsmanager_secret.redis_auth.arn
+}
